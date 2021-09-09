@@ -60,7 +60,7 @@ function mzb_deactivate()
 }
 
 
- // action_hooks mzb_change_user_role
+
  add_action('wc_memberships_user_membership_status_changed', 'mzb_change_user_role', 10, 3);
  add_filter('wc_memberships_grant_access_to_purchaser', 'mzb_grant_access_to_purchaser', 10, 3);
 
@@ -92,7 +92,7 @@ function mzb_deactivate()
  }
 
 
-// action_hooks update-profile-user
+
  add_action('profile_update', 'mzb_update_profile_user', 10, 2);
 
  function mzb_update_profile_user($user_id, $old_user_data)
@@ -101,7 +101,7 @@ function mzb_deactivate()
      $user->set_role('customer');
  }
  
- // importe class Wprus_Api_Update extends Wprus_Api_Abstract
+
  class Wprus_Api_Update extends Wprus_Api_Abstract
  {
      /**
@@ -189,19 +189,13 @@ function mzb_deactivate()
      {
          $user = get_user_by('id', $user_id);
         
-         // get all active memberships for the purchaser, regardless of status
+        
          $memberships = wc_memberships_get_user_memberships($user);
 
-         // affectation des variables
-         //  $user_id = $users
+      
          //$wp_user = get_userdata($user_id);
          $roles   = $user->roles;
 
- 
-
- 
-
-         // Si user role est subscriber stop acces
          if (in_array('site_member', $roles)) {
              foreach ($memberships as $membership) {
                  wp_delete_post($membership->get_id());
@@ -235,16 +229,11 @@ function mzb_deactivate()
              if (! empty($memberships)) {
                  return false;
              }
-
- 
-
-
              $args = array(
         // Enter the ID (post ID) of the plan to grant at registration
         'plan_id'   => 1356,
         'user_id'   => $args1->id,
         );
-         
              wc_memberships_create_user_membership($args);
              echo '<script type="text/javascript">' . 'console.log(' . $roles . ');</script>';
              //die();
