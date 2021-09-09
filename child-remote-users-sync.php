@@ -1,5 +1,4 @@
 <?php
-// create plugin wordpress
 
 /*
 Plugin Name: Child Remote Users Sync
@@ -9,7 +8,8 @@ membership woocommerce across Multiple Sites.
 Version: 1.
 dependance: WP Remote Users Sync
 Author: Mohammed Bensaad
-Author URI: https://froger.me/
+Author URI: https://fr.linkedin.com/in/mohammed-bensaad-developpeur
+
 Text Domain: mzb
 Domain Path: /languages
 */
