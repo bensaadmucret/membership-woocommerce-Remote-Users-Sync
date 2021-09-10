@@ -1,8 +1,8 @@
+## Description
+
 # Plugin that will allow you to manage several WooCommerce Memberships plan on wordpress sites.
 
 # Plugin qui vous permettra de gérer plusieurs abonnements WooCommerce sur différents sites wordpress.
-
-## Description
 
 ## Installation
 
