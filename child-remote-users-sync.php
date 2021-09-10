@@ -37,6 +37,14 @@ if (! defined('MZB_PLUGIN_BASENAME')) {
 }
 
 
+require_once ABSPATH . 'wp-includes/capabilities.php';
+require_once ABSPATH . 'wp-includes/pluggable.php';
+require_once ABSPATH . 'wp-includes/user.php';
+require_once ABSPATH . 'wp-includes/functions.php';
+
+
+
+
 require_once ABSPATH . 'wp-content/plugins/wp-remote-users-sync/wprus.php';
 require_once ABSPATH . 'wp-content/plugins/wp-remote-users-sync/inc/api/class-wprus-api-abstract.php';
 
@@ -51,13 +59,128 @@ function mzb_activate()
     }
 }
 
-
+/*
 function mzb_deactivate()
 {
     if (!is_plugin_active('wp-remote-users-sync/wprus.php')) {
         wp_die('Please activate WP Remote Users Sync plugin first.');
     }
 }
+*/
+add_action('admin_menu', 'mzb_add_admin_menu');
+function mzb_add_admin_menu()
+{
+    add_menu_page(
+        'Child Remote Users Sync',
+        'Child Remote Users Sync',
+        'manage_options',
+        'mzb-plugin',
+        'mzb_plugin_options',
+        'dashicons-pressthis',
+        6
+    );
+}
+
+
+function mzb_plugin_options()
+{
+    if (!current_user_can('manage_options')) {
+        wp_die(__('You do not have sufficient permissions to access this page.'));
+    }
+    // création d'un formulaire avec un champs texte pour ajouter un id plan
+
+    echo '<div class="wrap">';
+    echo '<h1>Child Remote Users Sync</h1>';
+    echo '<form method="post" action="options.php">';
+    echo '<h3> Ajouter votre plan id produit woocommerce </h3>';
+    echo '<p> Pour plus d\'info voir la doc de Woocommerce 
+    <a href="https://docs.woocommerce.com/document/woocommerce-memberships-plans/"> 
+    cliquez ici </a> </p>';
+   
+    settings_fields('mzb_options');
+    do_settings_sections('mzb-plugin');
+    submit_button();
+    echo '</form>';
+    echo '</div>';
+}
+
+add_action('admin_init', 'mzb_settings_init');
+function mzb_settings_init()
+{
+    register_setting('mzb_options', 'mzb_id_plan');
+    add_settings_section(
+        'mzb_section_id',
+        '',
+        'mzb_settings_section_callback',
+        'mzb-plugin'
+    );
+    add_settings_field(
+        'mzb_id_plan',
+        'Plan ID',
+        'mzb_id_plan_callback',
+        'mzb-plugin',
+        'mzb_section_id'
+    );
+}
+
+
+function mzb_settings_section_callback()
+{
+    echo '<p> Ajouter votre plan id produit woocommerce </p>';
+}
+
+
+function mzb_id_plan_callback()
+{
+    printf(
+        '<input type="text" id="mzb_id_plan" name="mzb_id_plan" value="%s" />',
+        get_option('mzb_id_plan')
+    );
+}
+
+
+add_action('admin_init', 'mzb_add_plan_id');
+function mzb_add_plan_id()
+{
+    $plan_id = get_option('mzb_id_plan');
+    if (!empty($plan_id)) {
+        $plan_id = get_option('mzb_id_plan');
+        $plan_id = explode(',', $plan_id);
+        $plan_id = array_map('trim', $plan_id);
+        $plan_id = array_map('intval', $plan_id);
+        $plan_id = array_unique($plan_id);
+        $plan_id = array_filter($plan_id);
+        $plan_id = implode(',', $plan_id);
+        update_option('mzb_id_plan', $plan_id);
+    }
+}
+
+
+
+
+
+
+
+//create function to add roles
+function mzb_add_roles()
+{
+    add_role('site_member', 'Site Member', array(
+        'read' => true,
+        'edit_posts' => false,
+        'delete_posts' => false,
+    ));
+}
+add_action('init', 'mzb_add_roles');
+add_action('admin_init', 'mzb_add_roles');
+
+
+// create function to remove roles
+function mzb_remove_roles()
+{
+    remove_role('site_member');
+    remove_role('Site Member'); //remove role from the database
+}
+//add_action('init', 'mzb_remove_roles');
 
 
 
@@ -104,83 +227,7 @@ function mzb_deactivate()
 
  class Wprus_Api_Update extends Wprus_Api_Abstract
  {
-     /**
-      * @var string
-      */
-
-     protected $action = 'update';
-     
-     /**
-      * @var string
-      */
-     protected $method = 'POST';
-
-     /**
-      * @var string
-      */
-     protected $endpoint = 'update';
-
-     /**
-      * @var array
-      */
-     protected $required_params = array(
-         'user_id',
-         'user_email',
-         'user_login',
-         'user_nicename',
-         'user_url',
-         'display_name',
-         'first_name',
-         'last_name',
-         'nickname',
-         'description',
-         'rich_editing',
-         'comment_shortcuts',
-         'admin_color',
-         'use_ssl',
-         'show_admin_bar_front',
-         'locale',
-         'show_admin_bar_admin',
-         'role',
-         'avatar_url',
-         'avatar_urls',
-         'meta',
-     );
-
-     /**
-      * @var array
-      */
-     protected $optional_params = array(
-         'user_pass',
-         'user_registered',
-         'user_activation_key',
-         'user_status',
-         'spam',
-         'deleted',
-         'email',
-         'url',
-         'nicename',
-         'capabilities',
-         'extra_capabilities',
-         'first_name',
-         'last_name',
-         'nickname',
-         'description',
-         'rich_editing',
-         'comment_shortcuts',
-         'admin_color',
-         'use_ssl',
-         'show_admin_bar_front',
-         'locale',
-         'show_admin_bar_admin',
-         'role',
-         'avatar_url',
-         'avatar_urls',
-         'meta',
-     );
-
-
-     public function init_notification_hooks()
+     public function __construct()
      {
          add_action('wprus_update_user_notification', array($this, 'notify_user'), 10, 2);
      }
@@ -189,10 +236,7 @@ function mzb_deactivate()
      {
          $user = get_user_by('id', $user_id);
         
-        
          $memberships = wc_memberships_get_user_memberships($user);
-
-      
          //$wp_user = get_userdata($user_id);
          $roles   = $user->roles;
 
@@ -200,39 +244,31 @@ function mzb_deactivate()
              foreach ($memberships as $membership) {
                  wp_delete_post($membership->get_id());
              }
-             foreach ($roles as $role) {
-                 echo '<script type="text/javascript">' .
-          'console.log(' . $role . ');</script>';
-             }
          }
 
          if (in_array('subscriber', $roles)) {
              $args = array(
-        // Enter the ID (post ID) of the plan to grant at registration
-        'plan_id'   => 1356,
-        'user_id'   => $user,
+            // Enter the ID (post ID) of the plan to grant at registration
+            'plan_id'   => get_option('mzb_id_plan'),
+            'user_id'   => $user,
         );
          
-             wc_memberships_create_user_membership($args);
-             foreach ($roles as $role) {
-                 echo '<script type="text/javascript">' .
-        'console.log(' . $role . ');</script>';
-             }
-             var_dump($roles);
+             // create a new membership
+             $membership = wc_memberships_create_user_membership($args);
+             var_dump($membership);
          }
 
+         
+    
          // Si user role est customer give acces
          if (in_array('customer', $roles)) {
         
-         // if there are any memberships returned, do not grant access from purchase
-             //var_dump($user_memberships);
-             if (! empty($memberships)) {
-                 return false;
+         //if there are any memberships returned, do not grant access from purchase
+             if (count($memberships) > 0) {
+                 return;
              }
-             $args = array(
-        // Enter the ID (post ID) of the plan to grant at registration
-        'plan_id'   => 1356,
-        'user_id'   => $args1->id,
+        
+             $args = array('plan_id' => get_option('mzb_id_plan'),'user_id' => $user,
         );
              wc_memberships_create_user_membership($args);
              echo '<script type="text/javascript">' . 'console.log(' . $roles . ');</script>';
