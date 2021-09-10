@@ -14,6 +14,3 @@
 > You can add the role created by you in the condition for creating the memberships plan on the child site
 > ![](images/code-exemple.png)
 
-## Usage
-
-## Configuration
